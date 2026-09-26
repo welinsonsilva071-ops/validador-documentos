@@ -27,12 +27,20 @@ db.exec(`
     cliente_orgao_expedidor TEXT NOT NULL,
     data_cadastro TEXT NOT NULL,
     data_emissao TEXT NOT NULL,
+    hora_emissao TEXT DEFAULT '',
     arquivo_original TEXT NOT NULL,
     arquivo_selado TEXT NOT NULL,
     nome_arquivo TEXT NOT NULL,
     created_at TEXT DEFAULT (datetime('now', 'localtime'))
   )
 `);
+
+// Migration to ensure hora_emissao column exists if table was created previously
+try {
+  db.exec(`ALTER TABLE documentos ADD COLUMN hora_emissao TEXT DEFAULT ''`);
+} catch (e) {
+  // Column already exists
+}
 
 // Create index for faster lookups
 db.exec(`

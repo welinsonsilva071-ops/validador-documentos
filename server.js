@@ -87,7 +87,7 @@ function formatDateBR(dateStr) {
 }
 
 // ─── PDF sealing ────────────────────────────────────────────────────────────────
-async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome, clienteNome, dataEmissao) {
+async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome, clienteNome, dataEmissao, horaEmissao) {
   const existingPdfBytes = fs.readFileSync(inputPath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
 
@@ -104,7 +104,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
   const qrImage = await pdfDoc.embedPng(qrBuffer);
 
   const pages = pdfDoc.getPages();
-  const footerHeight = 85;
+  const footerHeight = 80;
   const qrSize = 58;
   const marginLeft = 30;
   const marginRight = 30;
@@ -156,7 +156,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.16, 0.29, 0.84),
     });
 
-    // Verification URL (link oficial da internet, sem localhost)
+    // Verification URL
     page.drawText('Verifique em: ' + verificationUrl, {
       x: marginLeft,
       y: footerHeight - 38,
@@ -165,21 +165,15 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.45, 0.45, 0.55),
     });
 
-    // Emission / Sealing date (usa exatamente a data de emissao informada)
-    const emissaoFormatada = formatDateBR(dataEmissao);
-    page.drawText('Emitido em: ' + emissaoFormatada, {
+    // Data e horário de emissão (ex: Emitido em: 26/09/2026 às 14:30)
+    let emissaoTexto = 'Emitido em: ' + formatDateBR(dataEmissao);
+    if (horaEmissao && horaEmissao.trim()) {
+      emissaoTexto += ' as ' + horaEmissao.trim();
+    }
+    page.drawText(emissaoTexto, {
       x: marginLeft,
-      y: footerHeight - 50,
-      size: 6,
-      font: font,
-      color: rgb(0.45, 0.45, 0.55),
-    });
-
-    // Selado em: consta a data de emissao definida pelo usuario
-    page.drawText('Selado em: ' + emissaoFormatada, {
-      x: marginLeft,
-      y: footerHeight - 62,
-      size: 6,
+      y: footerHeight - 51,
+      size: 6.5,
       font: font,
       color: rgb(0.45, 0.45, 0.55),
     });
@@ -187,7 +181,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
     // Company/client info
     page.drawText(empresaNome + ' | ' + clienteNome, {
       x: marginLeft,
-      y: footerHeight - 74,
+      y: footerHeight - 65,
       size: 6,
       font: font,
       color: rgb(0.55, 0.55, 0.65),
@@ -221,13 +215,13 @@ app.post('/api/documentos', upload.single('documento'), async (req, res) => {
     const {
       empresa_nome, empresa_cnpj,
       cliente_nome, cliente_cpf, cliente_rg,
-      cliente_orgao_expedidor, data_cadastro, data_emissao
+      cliente_orgao_expedidor, data_cadastro, data_emissao, hora_emissao
     } = req.body;
 
     const required = {
       empresa_nome, empresa_cnpj,
       cliente_nome, cliente_cpf, cliente_rg,
-      cliente_orgao_expedidor, data_cadastro, data_emissao
+      cliente_orgao_expedidor, data_cadastro, data_emissao, hora_emissao
     };
 
     const fieldNames = {
@@ -238,7 +232,8 @@ app.post('/api/documentos', upload.single('documento'), async (req, res) => {
       cliente_rg: 'RG',
       cliente_orgao_expedidor: 'Orgao Expedidor',
       data_cadastro: 'Data de Cadastro',
-      data_emissao: 'Data de Emissao'
+      data_emissao: 'Data de Emissao',
+      hora_emissao: 'Horario de Emissao'
     };
 
     for (const [field, value] of Object.entries(required)) {
@@ -261,7 +256,7 @@ app.post('/api/documentos', upload.single('documento'), async (req, res) => {
 
     await sealPDF(
       req.file.path, sealedPath, codigo, verificationUrl,
-      empresa_nome.trim(), cliente_nome.trim(), data_emissao.trim()
+      empresa_nome.trim(), cliente_nome.trim(), data_emissao.trim(), (hora_emissao || '').trim()
     );
 
     // Save to database
@@ -269,8 +264,8 @@ app.post('/api/documentos', upload.single('documento'), async (req, res) => {
       INSERT INTO documentos (
         codigo_validacao, empresa_nome, empresa_cnpj,
         cliente_nome, cliente_cpf, cliente_rg, cliente_orgao_expedidor,
-        data_cadastro, data_emissao, arquivo_original, arquivo_selado, nome_arquivo
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        data_cadastro, data_emissao, hora_emissao, arquivo_original, arquivo_selado, nome_arquivo
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -278,6 +273,7 @@ app.post('/api/documentos', upload.single('documento'), async (req, res) => {
       empresa_nome.trim(), empresa_cnpj.trim(),
       cliente_nome.trim(), cliente_cpf.trim(), cliente_rg.trim(),
       cliente_orgao_expedidor.trim(), data_cadastro.trim(), data_emissao.trim(),
+      (hora_emissao || '').trim(),
       req.file.path, sealedPath, req.file.originalname
     );
 
@@ -331,8 +327,8 @@ app.get('/api/verificar/:codigo', (req, res) => {
         },
         data_cadastro: doc.data_cadastro,
         data_emissao: doc.data_emissao,
+        hora_emissao: doc.hora_emissao || '',
         nome_arquivo: doc.nome_arquivo,
-        selado_em: doc.data_emissao,
         download_url: '/api/documento/' + doc.codigo_validacao + '/download'
       }
     });

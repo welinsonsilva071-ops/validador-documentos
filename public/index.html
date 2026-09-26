@@ -65,11 +65,18 @@
       <section class="card">
         <h2 class="card-title"><span class="icon">📋</span> Dados do Documento</h2>
         <div class="form-grid">
-          <div class="form-group full-width">
+          <div class="form-group">
             <label for="data_emissao">Data de Emissão do Documento</label>
             <input type="date" id="data_emissao" name="data_emissao" required>
             <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.3rem;">
-              Pode ser uma data retroativa (data em que o documento foi originalmente emitido)
+              Pode ser uma data retroativa
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="hora_emissao">Horário de Emissão (Hora:Minuto)</label>
+            <input type="time" id="hora_emissao" name="hora_emissao" required>
+            <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.3rem;">
+              Exemplo: 14:30
             </small>
           </div>
         </div>

@@ -175,8 +175,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Dates
     document.getElementById('infoDataCadastro').textContent = formatDate(doc.data_cadastro);
-    document.getElementById('infoDataEmissao').textContent = formatDate(doc.data_emissao);
-    document.getElementById('infoSeladoEm').textContent = formatDateTime(doc.selado_em);
+    var emissaoTexto = formatDate(doc.data_emissao);
+    if (doc.hora_emissao) {
+      emissaoTexto += ' às ' + doc.hora_emissao;
+    }
+    document.getElementById('infoDataEmissao').textContent = emissaoTexto;
 
     // File
     document.getElementById('infoArquivo').textContent = doc.nome_arquivo;

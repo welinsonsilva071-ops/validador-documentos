@@ -22,11 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const errorMessage = document.getElementById('errorMessage');
   const toast = document.getElementById('toast');
 
-  // ─── Set today's date as default ─────────────────────────────────────────────
-  const today = new Date().toISOString().split('T')[0];
+  // ─── Set today's date and current time as default ───────────────────────────
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const currentTime = `${hours}:${minutes}`;
+
   document.getElementById('data_cadastro').value = today;
   if (document.getElementById('data_emissao')) {
     document.getElementById('data_emissao').value = today;
+  }
+  if (document.getElementById('hora_emissao')) {
+    document.getElementById('hora_emissao').value = currentTime;
   }
 
   // ─── Input Masks ─────────────────────────────────────────────────────────────
@@ -174,6 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('data_cadastro').value = today;
     if (document.getElementById('data_emissao')) {
       document.getElementById('data_emissao').value = today;
+    }
+    if (document.getElementById('hora_emissao')) {
+      document.getElementById('hora_emissao').value = currentTime;
     }
     fileInput.value = '';
     fileInfo.style.display = 'none';
