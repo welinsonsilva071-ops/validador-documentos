@@ -8,7 +8,21 @@ const db = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+// ─── Helper para obter a URL base dinâmica (Sem localhost fixo) ────────────────
+function getBaseUrl(req) {
+  if (process.env.BASE_URL) {
+    return process.env.BASE_URL.replace(/\/$/, '');
+  }
+  if (req) {
+    const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    if (host) {
+      return `${proto}://${host}`;
+    }
+  }
+  return `http://localhost:${PORT}`;
+}
 
 // ─── Ensure directories exist ───────────────────────────────────────────────────
 ['uploads', 'sealed', 'data'].forEach(dir => {
@@ -80,7 +94,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Generate QR code as PNG buffer
+  // Generate QR code as PNG buffer apontando para o link real da internet
   const qrBuffer = await QRCode.toBuffer(verificationUrl, {
     width: 200,
     margin: 1,
@@ -99,7 +113,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
     const page = pages[i];
     const { width } = page.getSize();
 
-    // ── Background bar ──
+    // Background bar
     page.drawRectangle({
       x: 0,
       y: 0,
@@ -108,7 +122,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.97, 0.97, 0.98),
     });
 
-    // ── Separator line ──
+    // Separator line
     page.drawLine({
       start: { x: marginLeft, y: footerHeight + 6 },
       end: { x: width - marginRight, y: footerHeight + 6 },
@@ -116,7 +130,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.16, 0.29, 0.84),
     });
 
-    // ── QR code (right side) ──
+    // QR code (right side)
     page.drawImage(qrImage, {
       x: width - marginRight - qrSize,
       y: 14,
@@ -124,7 +138,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       height: qrSize,
     });
 
-    // ── Validation code label ──
+    // Validation code label
     page.drawText('CODIGO DE VALIDACAO', {
       x: marginLeft,
       y: footerHeight - 8,
@@ -133,7 +147,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.4, 0.4, 0.5),
     });
 
-    // ── Validation code value ──
+    // Validation code value
     page.drawText(code, {
       x: marginLeft,
       y: footerHeight - 22,
@@ -142,16 +156,16 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.16, 0.29, 0.84),
     });
 
-    // ── Verification URL ──
-    page.drawText('Verifique em: ' + BASE_URL + '/verificar.html?codigo=' + code, {
+    // Verification URL (link oficial da internet, sem localhost)
+    page.drawText('Verifique em: ' + verificationUrl, {
       x: marginLeft,
       y: footerHeight - 38,
-      size: 6,
+      size: 5.5,
       font: font,
       color: rgb(0.45, 0.45, 0.55),
     });
 
-    // ── Emission date ──
+    // Emission date
     const emissaoText = 'Emitido em: ' + formatDateBR(dataEmissao);
     page.drawText(emissaoText, {
       x: marginLeft,
@@ -161,7 +175,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.45, 0.45, 0.55),
     });
 
-    // ── Seal timestamp ──
+    // Seal timestamp
     const now = new Date();
     const dateStr = now.toLocaleDateString('pt-BR') + ' as ' + now.toLocaleTimeString('pt-BR');
     page.drawText('Selado em: ' + dateStr, {
@@ -172,7 +186,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.45, 0.45, 0.55),
     });
 
-    // ── Company/client info ──
+    // Company/client info
     page.drawText(empresaNome + ' | ' + clienteNome, {
       x: marginLeft,
       y: footerHeight - 74,
@@ -181,7 +195,7 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.55, 0.55, 0.65),
     });
 
-    // ── Page number ──
+    // Page number
     const pageText = 'Pagina ' + (i + 1) + ' de ' + pages.length;
     const pageTextWidth = font.widthOfTextAtSize(pageText, 6);
     page.drawText(pageText, {
@@ -212,7 +226,6 @@ app.post('/api/documentos', upload.single('documento'), async (req, res) => {
       cliente_orgao_expedidor, data_cadastro, data_emissao
     } = req.body;
 
-    // Validate required fields
     const required = {
       empresa_nome, empresa_cnpj,
       cliente_nome, cliente_cpf, cliente_rg,
@@ -239,9 +252,10 @@ app.post('/api/documentos', upload.single('documento'), async (req, res) => {
       }
     }
 
-    // Generate unique validation code
+    // Identifica dinamicamente a URL pública usada pelo usuário (sem localhost)
+    const baseUrl = getBaseUrl(req);
     const codigo = generateUniqueCode();
-    const verificationUrl = BASE_URL + '/verificar.html?codigo=' + codigo;
+    const verificationUrl = `${baseUrl}/verificar.html?codigo=${codigo}`;
 
     // Seal the PDF
     const sealedFilename = 'selado-' + codigo + '-' + Date.now() + '.pdf';
@@ -371,12 +385,8 @@ app.use((err, req, res, next) => {
 
 // ─── Start server ───────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log('');
   console.log('='.repeat(55));
-  console.log('  Validador de Documentos PDF com QR Code');
+  console.log('  Validador de Documentos PDF Ativo');
+  console.log('  Detectando automaticamente link publico da requisicao');
   console.log('='.repeat(55));
-  console.log('  Cadastro:     ' + BASE_URL);
-  console.log('  Verificacao:  ' + BASE_URL + '/verificar.html');
-  console.log('='.repeat(55));
-  console.log('');
 });
