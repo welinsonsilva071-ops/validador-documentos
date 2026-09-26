@@ -165,9 +165,9 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.45, 0.45, 0.55),
     });
 
-    // Emission date
-    const emissaoText = 'Emitido em: ' + formatDateBR(dataEmissao);
-    page.drawText(emissaoText, {
+    // Emission / Sealing date (usa exatamente a data de emissao informada)
+    const emissaoFormatada = formatDateBR(dataEmissao);
+    page.drawText('Emitido em: ' + emissaoFormatada, {
       x: marginLeft,
       y: footerHeight - 50,
       size: 6,
@@ -175,10 +175,8 @@ async function sealPDF(inputPath, outputPath, code, verificationUrl, empresaNome
       color: rgb(0.45, 0.45, 0.55),
     });
 
-    // Seal timestamp
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('pt-BR') + ' as ' + now.toLocaleTimeString('pt-BR');
-    page.drawText('Selado em: ' + dateStr, {
+    // Selado em: consta a data de emissao definida pelo usuario
+    page.drawText('Selado em: ' + emissaoFormatada, {
       x: marginLeft,
       y: footerHeight - 62,
       size: 6,
@@ -334,7 +332,7 @@ app.get('/api/verificar/:codigo', (req, res) => {
         data_cadastro: doc.data_cadastro,
         data_emissao: doc.data_emissao,
         nome_arquivo: doc.nome_arquivo,
-        selado_em: doc.created_at,
+        selado_em: doc.data_emissao,
         download_url: '/api/documento/' + doc.codigo_validacao + '/download'
       }
     });
