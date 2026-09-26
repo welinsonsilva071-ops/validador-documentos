@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificação de Documento</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+</head>
+<body>
+
+  <!-- Header — SEM link para cadastro -->
+  <header class="header">
+    <h1><span class="icon">✅</span> Verificação de Documento</h1>
+    <p>Confirme a autenticidade do documento digitando o código ou escaneando o QR Code</p>
+  </header>
+
+  <main class="container">
+
+    <!-- Verificação por Código -->
+    <section class="card" id="verifyCard">
+      <h2 class="card-title"><span class="icon">🔍</span> Verificar Documento</h2>
+
+      <form id="verifyForm">
+        <div class="verify-input-group">
+          <input
+            type="text"
+            id="codigoInput"
+            placeholder="DIGITE O CÓDIGO"
+            maxlength="8"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="submit" class="btn btn-primary">Verificar</button>
+        </div>
+      </form>
+
+      <div class="divider">ou</div>
+
+      <!-- Scanner QR -->
+      <button type="button" class="btn btn-outline btn-block" id="scanBtn">
+        📷 Escanear QR Code
+      </button>
+
+      <div class="scanner-container" id="scannerContainer" style="display: none; margin-top: 1rem;">
+        <div id="qr-reader"></div>
+        <button type="button" class="btn btn-outline btn-block" id="stopScanBtn" style="margin-top: 0.5rem;">
+          ✕ Fechar Scanner
+        </button>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p class="loading-text">Consultando documento...</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="errorBox">
+      <span style="font-size: 1.5rem;">⚠️</span>
+      <span id="errorMessage">Documento não encontrado.</span>
+    </div>
+
+    <!-- Document Info -->
+    <div class="doc-info" id="docInfo">
+      <section class="card">
+        <div class="info-header">
+          <span class="check-icon">✅</span>
+          <div>
+            <div class="info-title">Documento Verificado</div>
+            <div class="info-subtitle">Este documento é autêntico e foi registrado no sistema.</div>
+          </div>
+        </div>
+
+        <!-- Código -->
+        <div class="info-section">
+          <div class="result-code">
+            <span class="code-value" id="infoCodigo"></span>
+          </div>
+        </div>
+
+        <!-- Empresa -->
+        <div class="info-section">
+          <h3 class="info-section-title">🏢 Dados da Empresa</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Nome</div>
+              <div class="info-value" id="infoEmpresaNome">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">CNPJ</div>
+              <div class="info-value" id="infoEmpresaCnpj">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cliente -->
+        <div class="info-section">
+          <h3 class="info-section-title">👤 Dados do Cliente</h3>
+          <div class="info-grid">
+            <div class="info-item full-width">
+              <div class="info-label">Nome</div>
+              <div class="info-value" id="infoClienteNome">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">CPF</div>
+              <div class="info-value" id="infoClienteCpf">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">RG</div>
+              <div class="info-value" id="infoClienteRg">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Órgão Expedidor</div>
+              <div class="info-value" id="infoClienteOrgao">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Data de Cadastro</div>
+              <div class="info-value" id="infoDataCadastro">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documento -->
+        <div class="info-section">
+          <h3 class="info-section-title">📄 Documento</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Arquivo</div>
+              <div class="info-value" id="infoArquivo">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Data de Emissão</div>
+              <div class="info-value" id="infoDataEmissao">—</div>
+            </div>
+            <div class="info-item full-width">
+              <div class="info-label">Selado em</div>
+              <div class="info-value" id="infoSeladoEm">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Download -->
+        <div style="margin-top: 1.5rem;">
+          <a href="#" class="btn btn-success btn-block" id="downloadBtn">
+            ⬇️ Baixar Documento Selado
+          </a>
+        </div>
+
+      </section>
+
+      <!-- New verification -->
+      <button type="button" class="btn btn-outline btn-block" id="newVerifyBtn" style="margin-top: 0;">
+        🔍 Nova Verificação
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- QR Scanner Library (CDN) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="/js/verificar.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validador de Documentos — Emissão</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <h1><span class="icon">🔐</span> Validador de Documentos</h1>
+    <p>Cadastre os dados, envie o PDF e receba o documento selado com QR Code</p>
+  </header>
+
+  <main class="container">
+
+    <form id="sealForm" enctype="multipart/form-data">
+
+      <!-- Dados da Empresa -->
+      <section class="card">
+        <h2 class="card-title"><span class="icon">🏢</span> Dados da Empresa</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="empresa_nome">Nome da Empresa</label>
+            <input type="text" id="empresa_nome" name="empresa_nome" placeholder="Razão Social" required>
+          </div>
+          <div class="form-group">
+            <label for="empresa_cnpj">CNPJ</label>
+            <input type="text" id="empresa_cnpj" name="empresa_cnpj" placeholder="00.000.000/0000-00" maxlength="18" required>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dados do Cliente -->
+      <section class="card">
+        <h2 class="card-title"><span class="icon">👤</span> Dados do Cliente</h2>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="cliente_nome">Nome Completo</label>
+            <input type="text" id="cliente_nome" name="cliente_nome" placeholder="Nome completo do cliente" required>
+          </div>
+          <div class="form-group">
+            <label for="cliente_cpf">CPF</label>
+            <input type="text" id="cliente_cpf" name="cliente_cpf" placeholder="000.000.000-00" maxlength="14" required>
+          </div>
+          <div class="form-group">
+            <label for="cliente_rg">RG</label>
+            <input type="text" id="cliente_rg" name="cliente_rg" placeholder="0000000" required>
+          </div>
+          <div class="form-group">
+            <label for="cliente_orgao_expedidor">Órgão Expedidor</label>
+            <input type="text" id="cliente_orgao_expedidor" name="cliente_orgao_expedidor" placeholder="SSP/SP" required>
+          </div>
+          <div class="form-group">
+            <label for="data_cadastro">Data de Cadastro</label>
+            <input type="date" id="data_cadastro" name="data_cadastro" required>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dados do Documento -->
+      <section class="card">
+        <h2 class="card-title"><span class="icon">📋</span> Dados do Documento</h2>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="data_emissao">Data de Emissão do Documento</label>
+            <input type="date" id="data_emissao" name="data_emissao" required>
+            <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.3rem;">
+              Pode ser uma data retroativa (data em que o documento foi originalmente emitido)
+            </small>
+          </div>
+        </div>
+      </section>
+
+      <!-- Upload do Documento -->
+      <section class="card">
+        <h2 class="card-title"><span class="icon">📄</span> Arquivo PDF</h2>
+
+        <div class="upload-area" id="uploadArea">
+          <span class="upload-icon">📁</span>
+          <p class="upload-text"><strong>Clique aqui</strong> ou arraste o arquivo PDF</p>
+          <p class="upload-hint">Tamanho máximo: 20MB</p>
+          <input type="file" id="fileInput" name="documento" accept="application/pdf">
+        </div>
+
+        <div class="file-selected" id="fileInfo" style="display: none;">
+          <span class="file-icon">📄</span>
+          <span class="file-name" id="fileName"></span>
+          <button type="button" class="file-remove" id="fileRemove" title="Remover arquivo">✕</button>
+        </div>
+      </section>
+
+      <!-- Submit -->
+      <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+        🔏 Selar Documento
+      </button>
+
+    </form>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p class="loading-text">Selando documento com QR Code...</p>
+    </div>
+
+    <!-- Result: Success -->
+    <div class="result-panel" id="resultSuccess">
+      <section class="card result-success">
+        <h2 class="card-title"><span class="icon">✅</span> Documento Selado com Sucesso!</h2>
+
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          O código de validação foi inserido no rodapé de todas as páginas do seu PDF.
+        </p>
+
+        <div class="result-code">
+          <span class="code-value" id="resultCode"></span>
+          <button class="copy-btn" id="copyCodeBtn" title="Copiar código">📋 Copiar</button>
+        </div>
+
+        <label style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+          Link de Verificação
+        </label>
+        <a href="#" class="result-link" id="resultLink" target="_blank"></a>
+
+        <div class="result-actions">
+          <a href="#" class="btn btn-success" id="downloadBtn">⬇️ Baixar PDF Selado</a>
+          <button type="button" class="btn btn-outline" id="newDocBtn">📄 Novo Documento</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Result: Error -->
+    <div class="result-panel" id="resultError">
+      <section class="card result-error">
+        <h2 class="card-title" style="color: var(--danger);"><span class="icon">❌</span> Erro</h2>
+        <p id="errorMessage" style="color: var(--danger); font-weight: 500;"></p>
+        <button type="button" class="btn btn-outline" id="retryBtn" style="margin-top: 1rem;">🔄 Tentar Novamente</button>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
